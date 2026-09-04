@@ -1,5 +1,7 @@
 package com.imagingutils
 
+import androidx.compose.foundation.ContextMenuArea
+import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,7 +30,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +48,8 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogWindow
+import androidx.compose.ui.window.rememberDialogState
 import androidx.compose.foundation.Image
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -99,6 +106,7 @@ fun ThumbnailGrid(
     entries: List<ImageEntry>,
     selected: ImageEntry?,
     onSelect: (ImageEntry) -> Unit,
+    onAutostretch: (ImageEntry) -> Unit,
 ) {
     if (entries.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -117,7 +125,7 @@ fun ThumbnailGrid(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(entries) { entry ->
-                ThumbnailCell(entry, entry == selected) { onSelect(entry) }
+                ThumbnailCell(entry, entry == selected, onAutostretch) { onSelect(entry) }
             }
         }
         VerticalScrollbar(
@@ -128,9 +136,15 @@ fun ThumbnailGrid(
 }
 
 @Composable
-private fun ThumbnailCell(entry: ImageEntry, isSelected: Boolean, onClick: () -> Unit) {
+private fun ThumbnailCell(
+    entry: ImageEntry,
+    isSelected: Boolean,
+    onAutostretch: (ImageEntry) -> Unit,
+    onClick: () -> Unit,
+) {
     val borderColor = if (isSelected) MaterialTheme.colorScheme.primary
     else MaterialTheme.colorScheme.outlineVariant
+    ContextMenuArea(items = { listOf(ContextMenuItem("Autostretch") { onAutostretch(entry) }) }) {
     Column(
         Modifier
             .clip(RoundedCornerShape(6.dp))
@@ -170,6 +184,70 @@ private fun ThumbnailCell(entry: ImageEntry, isSelected: Boolean, onClick: () ->
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+    }
+}
+
+@Composable
+fun AutostretchDialog(entry: ImageEntry, onClose: () -> Unit) {
+    DialogWindow(
+        onCloseRequest = onClose,
+        state = rememberDialogState(width = 960.dp, height = 720.dp),
+        title = "Autostretch — ${entry.file.name}",
+    ) {
+        MaterialTheme(colorScheme = darkColorScheme()) {
+            var stretched by remember(entry) { mutableStateOf<ImageBitmap?>(null) }
+            var original by remember(entry) { mutableStateOf<ImageBitmap?>(null) }
+            var loading by remember(entry) { mutableStateOf(true) }
+            var showOriginal by remember(entry) { mutableStateOf(false) }
+            LaunchedEffect(entry) {
+                loading = true
+                stretched = withContext(Dispatchers.IO) { loadAutostretchPreview(entry) }
+                original = withContext(Dispatchers.IO) { loadThumbnail(entry, 1600) }
+                loading = false
+            }
+            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                Column(Modifier.fillMaxSize().padding(12.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            if (showOriginal) "Original (linear)" else "Autostretched",
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        Spacer(Modifier.weight(1f))
+                        TextButton(
+                            onClick = { showOriginal = !showOriginal },
+                            enabled = stretched != null && original != null,
+                        ) {
+                            Text(if (showOriginal) "Show autostretched" else "Compare original")
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Box(
+                        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        val shown = if (showOriginal) original else stretched
+                        when {
+                            loading -> CircularProgressIndicator()
+                            shown != null -> Image(
+                                painter = BitmapPainter(shown),
+                                contentDescription = entry.file.name,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit,
+                            )
+                            else -> Text(
+                                "Cannot decode this format for autostretch (${entry.kind.name}).",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

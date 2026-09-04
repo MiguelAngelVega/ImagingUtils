@@ -51,6 +51,7 @@ private fun App() {
     var sortKey by remember { mutableStateOf(SortKey.NAME) }
     var ascending by remember { mutableStateOf(true) }
     var selectedExtensions by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var autostretchTarget by remember { mutableStateOf<ImageEntry?>(null) }
     val availableExts = remember(entries) { availableExtensions(entries) }
     val visibleEntries = remember(entries, selectedExtensions, sortKey, ascending) {
         sortEntries(filterByExtensions(entries, selectedExtensions), sortKey, ascending)
@@ -87,13 +88,21 @@ private fun App() {
                         selectedExtensions + ext
                     }
                 }
-                ThumbnailGrid(visibleEntries, selected) { selected = it }
+                ThumbnailGrid(
+                    visibleEntries,
+                    selected,
+                    onSelect = { selected = it },
+                    onAutostretch = { autostretchTarget = it },
+                )
             }
             VerticalDivider()
             Column(Modifier.width(340.dp).fillMaxHeight()) {
                 MetadataPanel(selected)
             }
         }
+    }
+    autostretchTarget?.let { target ->
+        AutostretchDialog(target) { autostretchTarget = null }
     }
 }
 
