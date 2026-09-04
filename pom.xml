@@ -138,8 +138,14 @@
                           un-relocated com.intellij.* classes, matching the compiler
                           used by kotlin-maven-plugin (the -embeddable variant fails
                           with NoClassDefFoundError on relocated classes here).
+
+                          Path uses ${user.home}/.m2/repository (the default local
+                          repo). Do NOT use ${settings.localRepository}: IntelliJ does
+                          not interpolate it in Kotlin plugin args, so the IDE build
+                          fails with "Plugin classpath entry points to a non-existent
+                          location". If your local repo is elsewhere, adjust this path.
                         -->
-                        <arg>-Xplugin=${settings.localRepository}/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/${kotlin.version}/kotlin-compose-compiler-plugin-${kotlin.version}.jar</arg>
+                        <arg>-Xplugin=${user.home}/.m2/repository/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/${kotlin.version}/kotlin-compose-compiler-plugin-${kotlin.version}.jar</arg>
                     </args>
                 </configuration>
                 <dependencies>

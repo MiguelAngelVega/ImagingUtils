@@ -5,8 +5,15 @@ import nom.tam.fits.Fits
 import nom.tam.fits.Header
 import java.io.File
 
-data class MetaRow(val key: String, val value: String)
+data class MetaRow(val key: String, val value: String, val type: String = "")
 data class MetaSection(val title: String, val rows: List<MetaRow>)
+
+/** Human-friendly name for a value's Java type (e.g. "String", "int[]"). */
+private fun friendlyType(clazz: Class<*>?): String = when {
+    clazz == null -> "—"
+    clazz.isArray -> friendlyType(clazz.componentType) + "[]"
+    else -> clazz.simpleName
+}
 
 /** Reads a human-readable view of a file's metadata, grouped into sections. */
 fun readMetadata(entry: ImageEntry): List<MetaSection> = buildList {
@@ -20,18 +27,21 @@ fun readMetadata(entry: ImageEntry): List<MetaSection> = buildList {
 private fun fileSection(file: File): MetaSection = MetaSection(
     "File",
     listOf(
-        MetaRow("Name", file.name),
-        MetaRow("Folder", file.parent ?: ""),
-        MetaRow("Size", humanSize(file.length())),
+        MetaRow("Name", file.name, "String"),
+        MetaRow("Folder", file.parent ?: "", "String"),
+        MetaRow("Size", humanSize(file.length()), "String"),
     ),
 )
 
 private fun readExif(file: File): List<MetaSection> = try {
     ImageMetadataReader.readMetadata(file).directories.map { dir ->
-        MetaSection(dir.name, dir.tags.map { MetaRow(it.tagName, it.description ?: "") })
+        MetaSection(dir.name, dir.tags.map { tag ->
+            val raw = dir.getObject(tag.tagType)
+            MetaRow(tag.tagName, tag.description ?: "", friendlyType(raw?.javaClass))
+        })
     }
 } catch (e: Exception) {
-    listOf(MetaSection("Metadata", listOf(MetaRow("Unavailable", e.message ?: "n/a"))))
+    listOf(MetaSection("Metadata", listOf(MetaRow("Unavailable", e.message ?: "n/a", "—"))))
 }
 
 private fun readFits(file: File): List<MetaSection> = try {
@@ -45,11 +55,17 @@ private fun readFits(file: File): List<MetaSection> = try {
                 val key = card.key ?: continue
                 if (key.isBlank()) continue
                 val comment = card.comment?.takeIf { it.isNotBlank() }?.let { "  / $it" } ?: ""
-                rows += MetaRow(key, (card.value ?: "") + comment)
+                rows += MetaRow(key, (card.value ?: "") + comment, friendlyType(card.valueType()))
             }
-            MetaSection("HDU $i header", rows)
+            val extName = header.getStringValue("EXTNAME")?.takeIf { it.isNotBlank() }
+            val label = when {
+                extName != null -> extName
+                i == 0 -> "Primary"
+                else -> "Extension $i"
+            }
+            MetaSection("FITS — $label (HDU $i)", rows)
         }
     }
 } catch (e: Exception) {
-    listOf(MetaSection("FITS", listOf(MetaRow("Unavailable", e.message ?: "n/a"))))
+    listOf(MetaSection("FITS", listOf(MetaRow("Unavailable", e.message ?: "n/a", "—"))))
 }

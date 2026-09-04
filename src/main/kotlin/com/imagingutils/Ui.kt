@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -121,24 +122,50 @@ fun MetadataPanel(selected: ImageEntry?) {
         return
     }
     var sections by remember(selected) { mutableStateOf<List<MetaSection>>(emptyList()) }
+    var filter by remember(selected) { mutableStateOf("") }
     LaunchedEffect(selected) {
         sections = withContext(Dispatchers.IO) { readMetadata(selected) }
     }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp)) {
-        for (section in sections) {
-            Text(section.title, style = MaterialTheme.typography.titleSmall)
-            Spacer(Modifier.height(4.dp))
-            for (row in section.rows) {
-                Row(Modifier.fillMaxWidth().padding(vertical = 1.dp)) {
-                    Text(
-                        row.key,
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.fillMaxWidth(0.45f),
-                    )
-                    Text(row.value, style = MaterialTheme.typography.bodySmall)
+    val query = filter.trim()
+    val filtered = if (query.isEmpty()) sections else sections.mapNotNull { section ->
+        val rows = section.rows.filter {
+            it.key.contains(query, ignoreCase = true) ||
+                it.value.contains(query, ignoreCase = true) ||
+                it.type.contains(query, ignoreCase = true)
+        }
+        if (rows.isEmpty()) null else section.copy(rows = rows)
+    }
+    Column(Modifier.fillMaxSize().padding(12.dp)) {
+        OutlinedTextField(
+            value = filter,
+            onValueChange = { filter = it },
+            label = { Text("Filter headers") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(12.dp))
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            for (section in filtered) {
+                Text(section.title, style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.height(4.dp))
+                for (row in section.rows) {
+                    Row(Modifier.fillMaxWidth().padding(vertical = 1.dp)) {
+                        Text(
+                            row.key,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.fillMaxWidth(0.38f),
+                        )
+                        Text(
+                            row.type,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth(0.30f),
+                        )
+                        Text(row.value, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
+                Spacer(Modifier.height(12.dp))
             }
-            Spacer(Modifier.height(12.dp))
         }
     }
 }
