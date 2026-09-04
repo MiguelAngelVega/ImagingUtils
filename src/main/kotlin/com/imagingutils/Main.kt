@@ -12,6 +12,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
@@ -22,6 +23,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -45,21 +48,46 @@ private fun App() {
     var folder by remember { mutableStateOf<File?>(null) }
     var entries by remember { mutableStateOf<List<ImageEntry>>(emptyList()) }
     var selected by remember { mutableStateOf<ImageEntry?>(null) }
+    var sortKey by remember { mutableStateOf(SortKey.NAME) }
+    var ascending by remember { mutableStateOf(true) }
+    var selectedExtensions by remember { mutableStateOf<Set<String>>(emptySet()) }
+    val availableExts = remember(entries) { availableExtensions(entries) }
+    val visibleEntries = remember(entries, selectedExtensions, sortKey, ascending) {
+        sortEntries(filterByExtensions(entries, selectedExtensions), sortKey, ascending)
+    }
 
     Column(Modifier.fillMaxSize()) {
-        TopBar(folder) {
-            val dir = chooseFolder() ?: return@TopBar
-            folder = dir
-            selected = null
-            entries = emptyList()
-            scope.launch {
-                entries = withContext(Dispatchers.IO) { scanFolder(dir) }
-            }
-        }
+        TopBar(
+            folder = folder,
+            sortKey = sortKey,
+            ascending = ascending,
+            onOpen = {
+                val dir = chooseFolder()
+                if (dir != null) {
+                    folder = dir
+                    selected = null
+                    entries = emptyList()
+                    scope.launch {
+                        val scanned = withContext(Dispatchers.IO) { scanFolder(dir) }
+                        entries = scanned
+                        selectedExtensions = availableExtensions(scanned).toSet()
+                    }
+                }
+            },
+            onSortKey = { sortKey = it },
+            onToggleDirection = { ascending = !ascending },
+        )
         HorizontalDivider()
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.weight(1f).fillMaxHeight()) {
-                ThumbnailGrid(entries, selected) { selected = it }
+                FilterBar(availableExts, selectedExtensions, visibleEntries.size) { ext ->
+                    selectedExtensions = if (ext in selectedExtensions) {
+                        selectedExtensions - ext
+                    } else {
+                        selectedExtensions + ext
+                    }
+                }
+                ThumbnailGrid(visibleEntries, selected) { selected = it }
             }
             VerticalDivider()
             Column(Modifier.width(340.dp).fillMaxHeight()) {
@@ -70,7 +98,14 @@ private fun App() {
 }
 
 @Composable
-private fun TopBar(folder: File?, onOpen: () -> Unit) {
+private fun TopBar(
+    folder: File?,
+    sortKey: SortKey,
+    ascending: Boolean,
+    onOpen: () -> Unit,
+    onSortKey: (SortKey) -> Unit,
+    onToggleDirection: () -> Unit,
+) {
     Row(
         Modifier.fillMaxWidth().padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -80,6 +115,28 @@ private fun TopBar(folder: File?, onOpen: () -> Unit) {
         Text(
             folder?.absolutePath ?: "No folder selected",
             style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(12.dp))
+        Text("Sort:", style = MaterialTheme.typography.bodyMedium)
+        SortOption("Name", sortKey == SortKey.NAME) { onSortKey(SortKey.NAME) }
+        SortOption("Date", sortKey == SortKey.DATE) { onSortKey(SortKey.DATE) }
+        TextButton(onClick = onToggleDirection) {
+            Text(if (ascending) "↑ Asc" else "↓ Desc")
+        }
+    }
+}
+
+@Composable
+private fun SortOption(label: String, selected: Boolean, onClick: () -> Unit) {
+    TextButton(onClick = onClick) {
+        Text(
+            label,
+            color = if (selected) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
         )
     }
 }

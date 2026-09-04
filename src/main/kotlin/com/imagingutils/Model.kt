@@ -34,6 +34,31 @@ fun scanFolder(dir: File): List<ImageEntry> =
         ?.toList()
         ?: emptyList()
 
+/** Distinct lowercase extensions present in [entries], sorted alphabetically. */
+fun availableExtensions(entries: List<ImageEntry>): List<String> =
+    entries.asSequence()
+        .map { it.file.extension.lowercase() }
+        .filter { it.isNotBlank() }
+        .distinct()
+        .sorted()
+        .toList()
+
+/** Keeps only entries whose extension is in [selected]. */
+fun filterByExtensions(entries: List<ImageEntry>, selected: Set<String>): List<ImageEntry> =
+    entries.filter { it.file.extension.lowercase() in selected }
+
+/** How the thumbnail grid is ordered. */
+enum class SortKey(val label: String) { NAME("Name"), DATE("Date") }
+
+/** Returns [entries] ordered by [key]; [ascending] toggles the direction. */
+fun sortEntries(entries: List<ImageEntry>, key: SortKey, ascending: Boolean): List<ImageEntry> {
+    val comparator = when (key) {
+        SortKey.NAME -> compareBy<ImageEntry> { it.file.name.lowercase() }
+        SortKey.DATE -> compareBy<ImageEntry> { it.file.lastModified() }
+    }
+    return entries.sortedWith(if (ascending) comparator else comparator.reversed())
+}
+
 fun humanSize(bytes: Long): String {
     if (bytes < 1024) return "$bytes B"
     val kb = bytes / 1024.0

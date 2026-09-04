@@ -4,9 +4,15 @@ import com.drew.imaging.ImageMetadataReader
 import nom.tam.fits.Fits
 import nom.tam.fits.Header
 import java.io.File
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 data class MetaRow(val key: String, val value: String, val type: String = "")
 data class MetaSection(val title: String, val rows: List<MetaRow>)
+
+private val MODIFIED_FORMAT: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault())
 
 /** Human-friendly name for a value's Java type (e.g. "String", "int[]"). */
 private fun friendlyType(clazz: Class<*>?): String = when {
@@ -30,6 +36,7 @@ private fun fileSection(file: File): MetaSection = MetaSection(
         MetaRow("Name", file.name, "String"),
         MetaRow("Folder", file.parent ?: "", "String"),
         MetaRow("Size", humanSize(file.length()), "String"),
+        MetaRow("Modified", MODIFIED_FORMAT.format(Instant.ofEpochMilli(file.lastModified())), "String"),
     ),
 )
 
