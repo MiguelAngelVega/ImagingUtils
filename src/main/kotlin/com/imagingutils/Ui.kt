@@ -53,6 +53,12 @@ import androidx.compose.ui.window.rememberDialogState
 import androidx.compose.foundation.Image
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+private val THUMB_DATE_FORMAT: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault())
 
 @Composable
 fun FilterBar(
@@ -144,7 +150,7 @@ private fun ThumbnailCell(
 ) {
     val borderColor = if (isSelected) MaterialTheme.colorScheme.primary
     else MaterialTheme.colorScheme.outlineVariant
-    ContextMenuArea(items = { listOf(ContextMenuItem("Autostretch") { onAutostretch(entry) }) }) {
+    ContextMenuArea(items = { listOf(ContextMenuItem("✨ Autostretch") { onAutostretch(entry) }) }) {
     Column(
         Modifier
             .clip(RoundedCornerShape(6.dp))
@@ -183,6 +189,14 @@ private fun ThumbnailCell(
             style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            THUMB_DATE_FORMAT.format(Instant.ofEpochMilli(entry.file.lastModified())),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
         )
     }
     }
