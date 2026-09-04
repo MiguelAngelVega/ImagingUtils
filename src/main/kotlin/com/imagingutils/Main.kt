@@ -13,8 +13,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,16 +37,31 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import javax.swing.JFileChooser
 
+/** How the app picks its color scheme: follow the OS, or force light/dark. */
+enum class ThemeMode(val label: String) {
+    SYSTEM("🖥 System"),
+    LIGHT("☀ Light"),
+    DARK("🌙 Dark");
+
+    fun next(): ThemeMode = entries[(ordinal + 1) % entries.size]
+}
+
 fun main() = application {
+    var themeMode by remember { mutableStateOf(ThemeMode.SYSTEM) }
+    val dark = when (themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
     Window(onCloseRequest = ::exitApplication, title = "ImagingUtils") {
-        MaterialTheme(colorScheme = darkColorScheme()) {
-            App()
+        MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
+            App(themeMode = themeMode, onThemeModeChange = { themeMode = it })
         }
     }
 }
 
 @Composable
-private fun App() {
+private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
     val scope = rememberCoroutineScope()
     var folder by remember { mutableStateOf<File?>(null) }
     var entries by remember { mutableStateOf<List<ImageEntry>>(emptyList()) }
@@ -57,6 +75,7 @@ private fun App() {
         sortEntries(filterByExtensions(entries, selectedExtensions), sortKey, ascending)
     }
 
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     Column(Modifier.fillMaxSize()) {
         TopBar(
             folder = folder,
@@ -77,6 +96,8 @@ private fun App() {
             },
             onSortKey = { sortKey = it },
             onToggleDirection = { ascending = !ascending },
+            themeMode = themeMode,
+            onToggleTheme = { onThemeModeChange(themeMode.next()) },
         )
         HorizontalDivider()
         Row(Modifier.fillMaxSize()) {
@@ -101,6 +122,7 @@ private fun App() {
             }
         }
     }
+    }
     autostretchTarget?.let { target ->
         AutostretchDialog(target) { autostretchTarget = null }
     }
@@ -114,6 +136,8 @@ private fun TopBar(
     onOpen: () -> Unit,
     onSortKey: (SortKey) -> Unit,
     onToggleDirection: () -> Unit,
+    themeMode: ThemeMode,
+    onToggleTheme: () -> Unit,
 ) {
     Row(
         Modifier.fillMaxWidth().padding(12.dp),
@@ -134,6 +158,10 @@ private fun TopBar(
         SortOption("Date", sortKey == SortKey.DATE) { onSortKey(SortKey.DATE) }
         TextButton(onClick = onToggleDirection) {
             Text(if (ascending) "↑ Asc" else "↓ Desc")
+        }
+        Spacer(Modifier.width(12.dp))
+        TextButton(onClick = onToggleTheme) {
+            Text(themeMode.label)
         }
     }
 }
