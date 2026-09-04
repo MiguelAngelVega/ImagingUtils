@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.imagingutils</groupId>
+    <artifactId>imaging-utils</artifactId>
+    <version>0.1.0</version>
+    <packaging>jar</packaging>
+    <name>ImagingUtils</name>
+    <description>Cross-platform desktop utility to manage photography and astrophotography files.</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>21</maven.compiler.release>
+        <kotlin.version>2.1.21</kotlin.version>
+        <kotlin.code.style>official</kotlin.code.style>
+        <compose.version>1.8.2</compose.version>
+        <skiko.version>0.9.4.2</skiko.version>
+        <coroutines.version>1.9.0</coroutines.version>
+        <main.class>com.imagingutils.MainKt</main.class>
+        <!-- Overridden per-OS by the profiles below. -->
+        <compose.platform>windows-x64</compose.platform>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>maven-central</id>
+            <url>https://repo1.maven.org/maven2</url>
+        </repository>
+        <repository>
+            <id>google</id>
+            <url>https://maven.google.com</url>
+        </repository>
+        <repository>
+            <id>compose-dev</id>
+            <url>https://maven.pkg.jetbrains.space/public/p/compose/dev</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-swing</artifactId>
+            <version>${coroutines.version}</version>
+        </dependency>
+
+        <!--
+          Compose Desktop, consumed as explicit "-desktop" JVM artifacts.
+          The aggregator (org.jetbrains.compose.desktop:desktop) references root
+          KMP coordinates that drag in Android .aar variants under plain Maven,
+          so we depend on the desktop variants directly and add the OS-specific
+          skiko native runtime ourselves (see the profiles below).
+        -->
+        <dependency>
+            <groupId>org.jetbrains.compose.runtime</groupId>
+            <artifactId>runtime-desktop</artifactId>
+            <version>${compose.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.compose.foundation</groupId>
+            <artifactId>foundation-desktop</artifactId>
+            <version>${compose.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.compose.ui</groupId>
+            <artifactId>ui-desktop</artifactId>
+            <version>${compose.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.compose.material3</groupId>
+            <artifactId>material3-desktop</artifactId>
+            <version>${compose.version}</version>
+        </dependency>
+        <!-- Native Skia binaries for the host platform. -->
+        <dependency>
+            <groupId>org.jetbrains.skiko</groupId>
+            <artifactId>skiko-awt-runtime-${compose.platform}</artifactId>
+            <version>${skiko.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Astro FITS headers + pixel data -->
+        <dependency>
+            <groupId>gov.nasa.gsfc.heasarc</groupId>
+            <artifactId>nom-tam-fits</artifactId>
+            <version>1.22.1</version>
+        </dependency>
+        <!-- EXIF / IPTC / XMP metadata (JPEG, TIFF, PNG and RAW) -->
+        <dependency>
+            <groupId>com.drewnoakes</groupId>
+            <artifactId>metadata-extractor</artifactId>
+            <version>2.21.0</version>
+        </dependency>
+        <!-- Extended ImageIO format support (TIFF, WebP, BMP, extended JPEG) -->
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-jpeg</artifactId>
+            <version>3.14.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-tiff</artifactId>
+            <version>3.14.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-webp</artifactId>
+            <version>3.14.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-bmp</artifactId>
+            <version>3.14.0</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <sourceDirectory>src/main/kotlin</sourceDirectory>
+        <testSourceDirectory>src/test/kotlin</testSourceDirectory>
+        <plugins>
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
+                <configuration>
+                    <jvmTarget>21</jvmTarget>
+                    <args>
+                        <!--
+                          Enable the Compose compiler plugin (bundled with Kotlin).
+                          Use the non-embeddable "hosted" variant: it references
+                          un-relocated com.intellij.* classes, matching the compiler
+                          used by kotlin-maven-plugin (the -embeddable variant fails
+                          with NoClassDefFoundError on relocated classes here).
+                        -->
+                        <arg>-Xplugin=${settings.localRepository}/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/${kotlin.version}/kotlin-compose-compiler-plugin-${kotlin.version}.jar</arg>
+                    </args>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-compose-compiler-plugin</artifactId>
+                        <version>${kotlin.version}</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals><goal>compile</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals><goal>test-compile</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <mainClass>${main.class}</mainClass>
+                    <cleanupDaemonThreads>false</cleanupDaemonThreads>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!-- Selects the correct Compose Desktop native artifact for the host OS/arch. -->
+    <profiles>
+        <profile>
+            <id>windows-x64</id>
+            <activation>
+                <os><family>windows</family></os>
+            </activation>
+            <properties>
+                <compose.platform>windows-x64</compose.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>macos-arm64</id>
+            <activation>
+                <os><family>mac</family><arch>aarch64</arch></os>
+            </activation>
+            <properties>
+                <compose.platform>macos-arm64</compose.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>macos-x64</id>
+            <activation>
+                <os><family>mac</family><arch>x86_64</arch></os>
+            </activation>
+            <properties>
+                <compose.platform>macos-x64</compose.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>linux-x64</id>
+            <activation>
+                <os><family>unix</family><name>linux</name><arch>amd64</arch></os>
+            </activation>
+            <properties>
+                <compose.platform>linux-x64</compose.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>linux-arm64</id>
+            <activation>
+                <os><family>unix</family><name>linux</name><arch>aarch64</arch></os>
+            </activation>
+            <properties>
+                <compose.platform>linux-arm64</compose.platform>
+            </properties>
+        </profile>
+    </profiles>
+</project>
