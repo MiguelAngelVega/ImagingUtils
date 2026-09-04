@@ -188,6 +188,7 @@ fun MetadataPanel(selected: ImageEntry?) {
     }
     val query = filter.trim()
     val filtered = if (query.isEmpty()) sections else sections.mapNotNull { section ->
+        if (section.title == "File") return@mapNotNull section
         val rows = section.rows.filter {
             it.key.contains(query, ignoreCase = true) ||
                 it.value.contains(query, ignoreCase = true) ||
