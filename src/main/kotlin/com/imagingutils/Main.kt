@@ -148,11 +148,17 @@ private fun Toolbar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        IconButton(
+        /*IconButton(
             onClick = { selected?.let(onAutostretch) },
             enabled = selected != null,
         ) {
             Icon(Icons.Filled.AutoAwesome, contentDescription = "Autostretch")
+        }*/
+        Button(
+            onClick = { selected?.let(onAutostretch) },
+            enabled = selected != null,
+        ) {
+            Text("✨ Autostretch")
         }
     }
 }
