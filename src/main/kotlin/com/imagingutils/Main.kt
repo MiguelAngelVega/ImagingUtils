@@ -1,5 +1,6 @@
 package com.imagingutils
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,8 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -100,6 +105,11 @@ private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
             onToggleTheme = { onThemeModeChange(themeMode.next()) },
         )
         HorizontalDivider()
+        Toolbar(
+            selected = selected,
+            onAutostretch = { autostretchTarget = it },
+        )
+        HorizontalDivider()
         Row(Modifier.fillMaxSize()) {
             Column(Modifier.weight(1f).fillMaxHeight()) {
                 FilterBar(availableExts, selectedExtensions, visibleEntries.size) { ext ->
@@ -125,6 +135,25 @@ private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
     }
     autostretchTarget?.let { target ->
         AutostretchDialog(target) { autostretchTarget = null }
+    }
+}
+
+@Composable
+private fun Toolbar(
+    selected: ImageEntry?,
+    onAutostretch: (ImageEntry) -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        IconButton(
+            onClick = { selected?.let(onAutostretch) },
+            enabled = selected != null,
+        ) {
+            Icon(Icons.Filled.AutoAwesome, contentDescription = "Autostretch")
+        }
     }
 }
 

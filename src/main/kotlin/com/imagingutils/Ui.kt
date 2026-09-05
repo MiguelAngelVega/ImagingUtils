@@ -6,6 +6,7 @@ import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +28,15 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FitScreen
+import androidx.compose.material.icons.filled.PanTool
+import androidx.compose.material.icons.filled.ZoomIn
+import androidx.compose.material.icons.filled.ZoomOut
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -42,7 +51,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import kotlin.math.roundToInt
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
@@ -156,6 +173,16 @@ private fun ThumbnailCell(
             .clip(RoundedCornerShape(6.dp))
             .border(if (isSelected) 2.dp else 1.dp, borderColor, RoundedCornerShape(6.dp))
             .clickable(onClick = onClick)
+            .pointerInput(entry) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                            onClick()
+                        }
+                    }
+                }
+            }
             .padding(6.dp),
     ) {
         Box(
@@ -214,6 +241,9 @@ fun AutostretchDialog(entry: ImageEntry, onClose: () -> Unit) {
             var original by remember(entry) { mutableStateOf<ImageBitmap?>(null) }
             var loading by remember(entry) { mutableStateOf(true) }
             var showOriginal by remember(entry) { mutableStateOf(false) }
+            var scale by remember(entry) { mutableStateOf(1f) }
+            var offset by remember(entry) { mutableStateOf(Offset.Zero) }
+            var panEnabled by remember(entry) { mutableStateOf(false) }
             LaunchedEffect(entry) {
                 loading = true
                 stretched = withContext(Dispatchers.IO) { loadAutostretchPreview(entry) }
@@ -232,6 +262,22 @@ fun AutostretchDialog(entry: ImageEntry, onClose: () -> Unit) {
                             style = MaterialTheme.typography.titleSmall,
                         )
                         Spacer(Modifier.weight(1f))
+                        Text(
+                            "${(scale * 100).roundToInt()}%",
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                        IconButton(onClick = { scale = (scale / 1.25f).coerceAtLeast(0.1f) }) {
+                            Icon(Icons.Filled.ZoomOut, contentDescription = "Zoom out")
+                        }
+                        IconButton(onClick = { scale = (scale * 1.25f).coerceAtMost(12f) }) {
+                            Icon(Icons.Filled.ZoomIn, contentDescription = "Zoom in")
+                        }
+                        IconButton(onClick = { scale = 1f; offset = Offset.Zero }) {
+                            Icon(Icons.Filled.FitScreen, contentDescription = "Reset zoom")
+                        }
+                        IconToggleButton(checked = panEnabled, onCheckedChange = { panEnabled = it }) {
+                            Icon(Icons.Filled.PanTool, contentDescription = "Pan")
+                        }
                         TextButton(
                             onClick = { showOriginal = !showOriginal },
                             enabled = stretched != null && original != null,
@@ -241,7 +287,32 @@ fun AutostretchDialog(entry: ImageEntry, onClose: () -> Unit) {
                     }
                     Spacer(Modifier.height(8.dp))
                     Box(
-                        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
+                        Modifier
+                            .fillMaxSize()
+                            .clipToBounds()
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .pointerInput(entry) {
+                                awaitPointerEventScope {
+                                    while (true) {
+                                        val event = awaitPointerEvent()
+                                        if (event.type == PointerEventType.Scroll) {
+                                            val dy = event.changes.first().scrollDelta.y
+                                            if (dy != 0f) {
+                                                val factor = if (dy < 0) 1.1f else 1f / 1.1f
+                                                scale = (scale * factor).coerceIn(0.1f, 12f)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .then(
+                                if (panEnabled) Modifier.pointerInput(entry) {
+                                    detectDragGestures { change, dragAmount ->
+                                        change.consume()
+                                        offset += dragAmount
+                                    }
+                                } else Modifier,
+                            ),
                         contentAlignment = Alignment.Center,
                     ) {
                         val shown = if (showOriginal) original else stretched
@@ -250,7 +321,14 @@ fun AutostretchDialog(entry: ImageEntry, onClose: () -> Unit) {
                             shown != null -> Image(
                                 painter = BitmapPainter(shown),
                                 contentDescription = entry.file.name,
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .graphicsLayer(
+                                        scaleX = scale,
+                                        scaleY = scale,
+                                        translationX = offset.x,
+                                        translationY = offset.y,
+                                    ),
                                 contentScale = ContentScale.Fit,
                             )
                             else -> Text(

@@ -78,6 +78,16 @@
             <artifactId>material3-desktop</artifactId>
             <version>${compose.version}</version>
         </dependency>
+        <!--
+          Material Icons (ZoomIn/ZoomOut/Restore/PanTool, etc.). This artifact is
+          intentionally pinned by JetBrains to 1.7.3 (newer versions are not
+          published); it remains compatible with Compose ${compose.version}.
+        -->
+        <dependency>
+            <groupId>org.jetbrains.compose.material</groupId>
+            <artifactId>material-icons-extended-desktop</artifactId>
+            <version>1.7.3</version>
+        </dependency>
         <!-- Native Skia binaries for the host platform. -->
         <dependency>
             <groupId>org.jetbrains.skiko</groupId>
