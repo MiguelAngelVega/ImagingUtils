@@ -80,7 +80,7 @@ private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
             sortKey = sortKey,
             ascending = ascending,
             onOpen = {
-                val dir = chooseFolder()
+                val dir = chooseFolder(folder ?: loadLastFolder())
                 if (dir != null) {
                     saveLastFolder(dir)
                     loadFolder(dir)
@@ -125,10 +125,11 @@ private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
     }
 }
 
-private fun chooseFolder(): File? {
+private fun chooseFolder(initialDir: File?): File? {
     val chooser = JFileChooser().apply {
         fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
         dialogTitle = "Select image folder"
+        initialDir?.takeIf { it.isDirectory }?.let { currentDirectory = it }
     }
     return if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) chooser.selectedFile else null
 }
