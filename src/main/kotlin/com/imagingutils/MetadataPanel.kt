@@ -1,14 +1,17 @@
 package com.imagingutils
 
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -27,6 +30,9 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun MetadataPanel(selected: ImageEntry?) {
+    // Hoisted above the null check so the filter text survives selection changes
+    // (including deselect/reselect), rather than resetting per selected image.
+    var filter by remember { mutableStateOf("") }
     if (selected == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Select an image", style = MaterialTheme.typography.bodyMedium)
@@ -34,7 +40,6 @@ fun MetadataPanel(selected: ImageEntry?) {
         return
     }
     var sections by remember(selected) { mutableStateOf<List<MetaSection>>(emptyList()) }
-    var filter by remember(selected) { mutableStateOf("") }
     LaunchedEffect(selected) {
         sections = withContext(Dispatchers.IO) { readMetadata(selected) }
     }
@@ -57,7 +62,9 @@ fun MetadataPanel(selected: ImageEntry?) {
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(12.dp))
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        val scrollState = rememberScrollState()
+        Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().verticalScroll(scrollState).padding(end = 12.dp)) {
             for (section in filtered) {
                 Text(section.title, style = MaterialTheme.typography.titleSmall)
                 Spacer(Modifier.height(4.dp))
@@ -79,6 +86,11 @@ fun MetadataPanel(selected: ImageEntry?) {
                 }
                 Spacer(Modifier.height(12.dp))
             }
+        }
+        VerticalScrollbar(
+            adapter = rememberScrollbarAdapter(scrollState),
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+        )
         }
     }
 }
