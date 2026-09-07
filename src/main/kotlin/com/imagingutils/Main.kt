@@ -9,9 +9,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.Dispatchers
@@ -31,13 +27,8 @@ import javax.swing.JFileChooser
 
 fun main() = application {
     var themeMode by remember { mutableStateOf(ThemeMode.SYSTEM) }
-    val dark = when (themeMode) {
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-    }
     Window(onCloseRequest = ::exitApplication, title = "ImagingUtils") {
-        MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
+        AppTheme(themeMode) {
             App(themeMode = themeMode, onThemeModeChange = { themeMode = it })
         }
     }
@@ -114,7 +105,7 @@ private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
                 )
             }
             VerticalDivider()
-            Column(Modifier.width(340.dp).fillMaxHeight()) {
+            Column(Modifier.width(AppDimens.metadataPanelWidth).fillMaxHeight()) {
                 MetadataPanel(selected)
             }
         }

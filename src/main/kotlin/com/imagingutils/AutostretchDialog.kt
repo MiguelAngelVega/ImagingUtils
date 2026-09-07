@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.PanTool
@@ -24,7 +25,6 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -86,19 +86,48 @@ fun AutostretchDialog(entry: ImageEntry, onClose: () -> Unit) {
                             "${(scale * 100).roundToInt()}%",
                             style = MaterialTheme.typography.labelMedium,
                         )
-                        IconButton(onClick = { scale = (scale / 1.25f).coerceAtLeast(0.1f) }) {
-                            Icon(Icons.Filled.ZoomOut, contentDescription = "Zoom out")
+                        IconButton(
+                            onClick = { scale = (scale / 1.25f).coerceAtLeast(0.1f) },
+                            modifier = Modifier.size(AppDimens.iconButtonSize),
+                        ) {
+                            Icon(
+                                Icons.Filled.ZoomOut,
+                                contentDescription = "Zoom out",
+                                modifier = Modifier.size(AppDimens.iconSize),
+                            )
                         }
-                        IconButton(onClick = { scale = (scale * 1.25f).coerceAtMost(12f) }) {
-                            Icon(Icons.Filled.ZoomIn, contentDescription = "Zoom in")
+                        IconButton(
+                            onClick = { scale = (scale * 1.25f).coerceAtMost(12f) },
+                            modifier = Modifier.size(AppDimens.iconButtonSize),
+                        ) {
+                            Icon(
+                                Icons.Filled.ZoomIn,
+                                contentDescription = "Zoom in",
+                                modifier = Modifier.size(AppDimens.iconSize),
+                            )
                         }
-                        IconButton(onClick = { scale = 1f; offset = Offset.Zero }) {
-                            Icon(Icons.Filled.FitScreen, contentDescription = "Reset zoom")
+                        IconButton(
+                            onClick = { scale = 1f; offset = Offset.Zero },
+                            modifier = Modifier.size(AppDimens.iconButtonSize),
+                        ) {
+                            Icon(
+                                Icons.Filled.FitScreen,
+                                contentDescription = "Reset zoom",
+                                modifier = Modifier.size(AppDimens.iconSize),
+                            )
                         }
-                        IconToggleButton(checked = panEnabled, onCheckedChange = { panEnabled = it }) {
-                            Icon(Icons.Filled.PanTool, contentDescription = "Pan")
+                        IconToggleButton(
+                            checked = panEnabled,
+                            onCheckedChange = { panEnabled = it },
+                            modifier = Modifier.size(AppDimens.iconButtonSize),
+                        ) {
+                            Icon(
+                                Icons.Filled.PanTool,
+                                contentDescription = "Pan",
+                                modifier = Modifier.size(AppDimens.iconSize),
+                            )
                         }
-                        TextButton(
+                        CompactTextButton(
                             onClick = { showOriginal = !showOriginal },
                             enabled = stretched != null && original != null,
                         ) {

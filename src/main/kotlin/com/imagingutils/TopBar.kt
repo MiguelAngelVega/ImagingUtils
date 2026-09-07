@@ -5,10 +5,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,7 +30,7 @@ fun TopBar(
         Modifier.fillMaxWidth().padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Button(onClick = onOpen) { Text("Open Folder") }
+        CompactButton(onClick = onOpen) { Text("Open Folder") }
         Spacer(Modifier.width(12.dp))
         Text(
             folder?.absolutePath ?: "No folder selected",
@@ -45,11 +43,11 @@ fun TopBar(
         Text("Sort:", style = MaterialTheme.typography.bodyMedium)
         SortOption("Name", sortKey == SortKey.NAME) { onSortKey(SortKey.NAME) }
         SortOption("Date", sortKey == SortKey.DATE) { onSortKey(SortKey.DATE) }
-        TextButton(onClick = onToggleDirection) {
+        CompactTextButton(onClick = onToggleDirection) {
             Text(if (ascending) "↑ Asc" else "↓ Desc")
         }
         Spacer(Modifier.width(12.dp))
-        TextButton(onClick = onToggleTheme) {
+        CompactTextButton(onClick = onToggleTheme) {
             Text(themeMode.label)
         }
     }
@@ -57,7 +55,7 @@ fun TopBar(
 
 @Composable
 private fun SortOption(label: String, selected: Boolean, onClick: () -> Unit) {
-    TextButton(onClick = onClick) {
+    CompactTextButton(onClick = onClick) {
         Text(
             label,
             color = if (selected) MaterialTheme.colorScheme.primary
