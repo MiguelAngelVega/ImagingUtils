@@ -45,8 +45,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -77,7 +75,7 @@ fun ThumbnailGrid(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            items(entries) { entry ->
+            items(entries, key = { it.file.path }) { entry ->
                 ThumbnailCell(entry, entry == selected, onAutostretch) { onSelect(entry) }
             }
         }
@@ -126,7 +124,7 @@ private fun ThumbnailCell(
             var bitmap by remember(entry) { mutableStateOf<ImageBitmap?>(null) }
             var loading by remember(entry) { mutableStateOf(true) }
             LaunchedEffect(entry) {
-                bitmap = withContext(Dispatchers.IO) { loadThumbnail(entry) }
+                bitmap = ThumbnailCache.get(entry)
                 loading = false
             }
             when {
