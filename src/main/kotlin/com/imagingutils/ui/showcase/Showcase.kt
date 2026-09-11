@@ -1,4 +1,9 @@
-package com.imagingutils
+package com.imagingutils.ui.showcase
+
+import com.imagingutils.designsystem.AppDimens
+import com.imagingutils.designsystem.AppTheme
+import com.imagingutils.designsystem.CompactTextButton
+import com.imagingutils.designsystem.ThemeMode
 
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
@@ -42,7 +47,7 @@ import androidx.compose.ui.window.application
  * role, the type scale, and the app's reusable components, all under the live
  * theme so light/dark can be compared with the toggle in the header.
  *
- * Run it with: mvn exec:java -Dmain.class=com.imagingutils.ShowcaseKt
+ * Run it with: mvn exec:java -Dmain.class=com.imagingutils.ui.showcase.ShowcaseKt
  */
 fun main() = application {
     var themeMode by remember { mutableStateOf(ThemeMode.SYSTEM) }

@@ -1,4 +1,4 @@
-package com.imagingutils.processing
+package com.imagingutils.data.processing
 
 import java.awt.image.BufferedImage
 import kotlin.math.abs

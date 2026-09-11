@@ -1,4 +1,4 @@
-package com.imagingutils
+package com.imagingutils.data
 
 import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.coroutines.Dispatchers

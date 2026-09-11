@@ -1,4 +1,4 @@
-package com.imagingutils
+package com.imagingutils.ui.thumbnails
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

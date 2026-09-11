@@ -1,4 +1,8 @@
-package com.imagingutils
+package com.imagingutils.ui.chrome
+
+import com.imagingutils.designsystem.CompactButton
+import com.imagingutils.designsystem.CompactTextButton
+import com.imagingutils.designsystem.ThemeMode
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,7 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import java.io.File
@@ -18,11 +21,7 @@ import java.io.File
 @Composable
 fun TopBar(
     folder: File?,
-    sortKey: SortKey,
-    ascending: Boolean,
     onOpen: () -> Unit,
-    onSortKey: (SortKey) -> Unit,
-    onToggleDirection: () -> Unit,
     themeMode: ThemeMode,
     onToggleTheme: () -> Unit,
 ) {
@@ -40,27 +39,8 @@ fun TopBar(
             modifier = Modifier.weight(1f),
         )
         Spacer(Modifier.width(12.dp))
-        Text("Sort:", style = MaterialTheme.typography.bodyMedium)
-        SortOption("Name", sortKey == SortKey.NAME) { onSortKey(SortKey.NAME) }
-        SortOption("Date", sortKey == SortKey.DATE) { onSortKey(SortKey.DATE) }
-        CompactTextButton(onClick = onToggleDirection) {
-            Text(if (ascending) "↑ Asc" else "↓ Desc")
-        }
-        Spacer(Modifier.width(12.dp))
         CompactTextButton(onClick = onToggleTheme) {
             Text(themeMode.label)
         }
-    }
-}
-
-@Composable
-private fun SortOption(label: String, selected: Boolean, onClick: () -> Unit) {
-    CompactTextButton(onClick = onClick) {
-        Text(
-            label,
-            color = if (selected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-        )
     }
 }

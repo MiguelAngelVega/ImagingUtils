@@ -1,4 +1,4 @@
-package com.imagingutils
+package com.imagingutils.data
 
 import com.drew.imaging.ImageMetadataReader
 import nom.tam.fits.Fits

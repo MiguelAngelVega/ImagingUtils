@@ -1,4 +1,4 @@
-package com.imagingutils
+package com.imagingutils.data
 
 import java.io.File
 

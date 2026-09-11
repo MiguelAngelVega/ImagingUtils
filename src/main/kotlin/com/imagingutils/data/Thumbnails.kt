@@ -1,8 +1,8 @@
-package com.imagingutils
+package com.imagingutils.data
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
-import com.imagingutils.processing.autostretch
+import com.imagingutils.data.processing.autostretch
 import nom.tam.fits.Fits
 import nom.tam.util.ArrayFuncs
 import java.awt.Image

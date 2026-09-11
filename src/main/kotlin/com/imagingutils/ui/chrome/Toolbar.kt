@@ -1,4 +1,7 @@
-package com.imagingutils
+package com.imagingutils.ui.chrome
+
+import com.imagingutils.data.ImageEntry
+import com.imagingutils.designsystem.CompactButton
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

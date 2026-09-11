@@ -1,4 +1,4 @@
-package com.imagingutils
+package com.imagingutils.designsystem
 
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme

@@ -1,4 +1,10 @@
-package com.imagingutils
+package com.imagingutils.ui.preview
+
+import com.imagingutils.data.ImageEntry
+import com.imagingutils.data.loadAutostretchPreview
+import com.imagingutils.data.loadThumbnail
+import com.imagingutils.designsystem.AppDimens
+import com.imagingutils.designsystem.CompactTextButton
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

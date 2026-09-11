@@ -1,4 +1,13 @@
-package com.imagingutils
+package com.imagingutils.ui.showcase
+
+import com.imagingutils.data.SortKey
+import com.imagingutils.designsystem.AppDimens
+import com.imagingutils.designsystem.CompactButton
+import com.imagingutils.designsystem.CompactTextButton
+import com.imagingutils.designsystem.ThemeMode
+import com.imagingutils.ui.chrome.TopBar
+import com.imagingutils.ui.thumbnails.FilterBar
+import com.imagingutils.ui.thumbnails.SortBar
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -88,6 +97,9 @@ fun ComponentGallery() {
         Label("TopBar")
         TopBarDemo()
 
+        Label("SortBar")
+        SortBarDemo()
+
         Label("Progress")
         Row(
             horizontalArrangement = Arrangement.spacedBy(AppDimens.spaceMd),
@@ -136,17 +148,24 @@ private fun Label(text: String) {
 /** The real [TopBar] wired to throwaway state so it can be previewed here. */
 @Composable
 private fun TopBarDemo() {
-    var sortKey by remember { mutableStateOf(SortKey.NAME) }
-    var ascending by remember { mutableStateOf(true) }
     var mode by remember { mutableStateOf(ThemeMode.SYSTEM) }
     TopBar(
         folder = null,
-        sortKey = sortKey,
-        ascending = ascending,
         onOpen = {},
-        onSortKey = { sortKey = it },
-        onToggleDirection = { ascending = !ascending },
         themeMode = mode,
         onToggleTheme = { mode = mode.next() },
+    )
+}
+
+/** The real [SortBar] wired to throwaway state so it can be previewed here. */
+@Composable
+private fun SortBarDemo() {
+    var sortKey by remember { mutableStateOf(SortKey.NAME) }
+    var ascending by remember { mutableStateOf(true) }
+    SortBar(
+        sortKey = sortKey,
+        ascending = ascending,
+        onSortKey = { sortKey = it },
+        onToggleDirection = { ascending = !ascending },
     )
 }

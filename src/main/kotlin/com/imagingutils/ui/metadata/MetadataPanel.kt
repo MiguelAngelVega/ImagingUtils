@@ -1,4 +1,8 @@
-package com.imagingutils
+package com.imagingutils.ui.metadata
+
+import com.imagingutils.data.ImageEntry
+import com.imagingutils.data.MetaSection
+import com.imagingutils.data.readMetadata
 
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Box

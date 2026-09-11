@@ -1,7 +1,8 @@
-package com.imagingutils
+package com.imagingutils.ui.thumbnails
 
-import androidx.compose.foundation.ContextMenuArea
-import androidx.compose.foundation.ContextMenuItem
+import com.imagingutils.data.ImageEntry
+import com.imagingutils.data.ThumbnailCache
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
@@ -57,7 +58,6 @@ fun ThumbnailGrid(
     entries: List<ImageEntry>,
     selected: ImageEntry?,
     onSelect: (ImageEntry) -> Unit,
-    onAutostretch: (ImageEntry) -> Unit,
 ) {
     if (entries.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -76,7 +76,7 @@ fun ThumbnailGrid(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(entries, key = { it.file.path }) { entry ->
-                ThumbnailCell(entry, entry == selected, onAutostretch) { onSelect(entry) }
+                ThumbnailCell(entry, entry == selected) { onSelect(entry) }
             }
         }
         VerticalScrollbar(
@@ -90,12 +90,10 @@ fun ThumbnailGrid(
 private fun ThumbnailCell(
     entry: ImageEntry,
     isSelected: Boolean,
-    onAutostretch: (ImageEntry) -> Unit,
     onClick: () -> Unit,
 ) {
     val borderColor = if (isSelected) MaterialTheme.colorScheme.primary
     else MaterialTheme.colorScheme.outlineVariant
-    ContextMenuArea(items = { listOf(ContextMenuItem("✨ Autostretch") { onAutostretch(entry) }) }) {
     Column(
         Modifier
             .clip(RoundedCornerShape(6.dp))
@@ -153,6 +151,5 @@ private fun ThumbnailCell(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
-    }
     }
 }

@@ -1,27 +1,38 @@
 package com.imagingutils
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import com.imagingutils.data.*
+import com.imagingutils.designsystem.AppDimens
+import com.imagingutils.designsystem.AppTheme
+import com.imagingutils.designsystem.ThemeMode
+import com.imagingutils.ui.chrome.Toolbar
+import com.imagingutils.ui.chrome.TopBar
+import com.imagingutils.ui.metadata.MetadataPanel
+import com.imagingutils.ui.preview.AutostretchDialog
+import com.imagingutils.ui.preview.PreviewPane
+import com.imagingutils.ui.thumbnails.FilterBar
+import com.imagingutils.ui.thumbnails.SortBar
+import com.imagingutils.ui.thumbnails.ThumbnailGrid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.awt.Cursor
 import java.io.File
 import javax.swing.JFileChooser
 
@@ -44,6 +55,8 @@ private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
     var ascending by remember { mutableStateOf(true) }
     var selectedExtensions by remember { mutableStateOf<Set<String>>(emptySet()) }
     var autostretchTarget by remember { mutableStateOf<ImageEntry?>(null) }
+    var previewAutostretch by remember { mutableStateOf(false) }
+    var thumbnailsWidth by remember { mutableStateOf(AppDimens.thumbnailsPanelDefaultWidth) }
     val availableExts = remember(entries) { availableExtensions(entries) }
     val visibleEntries = remember(entries, selectedExtensions, sortKey, ascending) {
         sortEntries(filterByExtensions(entries, selectedExtensions), sortKey, ascending)
@@ -65,54 +78,94 @@ private fun App(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
     }
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-    Column(Modifier.fillMaxSize()) {
-        TopBar(
-            folder = folder,
-            sortKey = sortKey,
-            ascending = ascending,
-            onOpen = {
-                val dir = chooseFolder(folder ?: loadLastFolder())
-                if (dir != null) {
-                    saveLastFolder(dir)
-                    loadFolder(dir)
-                }
-            },
-            onSortKey = { sortKey = it },
-            onToggleDirection = { ascending = !ascending },
-            themeMode = themeMode,
-            onToggleTheme = { onThemeModeChange(themeMode.next()) },
-        )
-        HorizontalDivider()
-        Toolbar(
-            selected = selected,
-            onAutostretch = { autostretchTarget = it },
-        )
-        HorizontalDivider()
-        Row(Modifier.fillMaxSize()) {
-            Column(Modifier.weight(1f).fillMaxHeight()) {
-                FilterBar(availableExts, selectedExtensions, visibleEntries.size) { ext ->
-                    selectedExtensions = if (ext in selectedExtensions) {
-                        selectedExtensions - ext
-                    } else {
-                        selectedExtensions + ext
+        Column(Modifier.fillMaxSize()) {
+            TopBar(
+                folder = folder,
+                onOpen = {
+                    val dir = chooseFolder(folder ?: loadLastFolder())
+                    if (dir != null) {
+                        saveLastFolder(dir)
+                        loadFolder(dir)
+                    }
+                },
+                themeMode = themeMode,
+                onToggleTheme = { onThemeModeChange(themeMode.next()) },
+            )
+            HorizontalDivider()
+            Toolbar(
+                selected = selected,
+                onAutostretch = { autostretchTarget = it },
+            )
+            HorizontalDivider()
+            BoxWithConstraints(Modifier.fillMaxSize()) {
+                val minThumb = AppDimens.thumbnailsPanelMinWidth
+                val maxThumb = (maxWidth - AppDimens.metadataPanelWidth - AppDimens.previewPaneMinWidth)
+                    .coerceAtLeast(minThumb)
+                val thumbWidth = thumbnailsWidth.coerceIn(minThumb, maxThumb)
+                Row(Modifier.fillMaxSize()) {
+                    Column(Modifier.width(thumbWidth).fillMaxHeight()) {
+                        SortBar(
+                            sortKey = sortKey,
+                            ascending = ascending,
+                            onSortKey = { sortKey = it },
+                            onToggleDirection = { ascending = !ascending },
+                        )
+                        HorizontalDivider()
+                        FilterBar(availableExts, selectedExtensions, visibleEntries.size) { ext ->
+                            selectedExtensions = if (ext in selectedExtensions) {
+                                selectedExtensions - ext
+                            } else {
+                                selectedExtensions + ext
+                            }
+                        }
+                        ThumbnailGrid(
+                            visibleEntries,
+                            selected,
+                            onSelect = { selected = it },
+                        )
+                    }
+                    DraggableVerticalDivider { delta ->
+                        thumbnailsWidth = (thumbWidth + delta).coerceIn(minThumb, maxThumb)
+                    }
+                    PreviewPane(
+                        entry = selected,
+                        autostretch = previewAutostretch,
+                        onToggleAutostretch = { previewAutostretch = !previewAutostretch },
+                        onEnlarge = { selected?.let { autostretchTarget = it } },
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                    )
+                    VerticalDivider()
+                    Column(Modifier.width(AppDimens.metadataPanelWidth).fillMaxHeight()) {
+                        MetadataPanel(selected)
                     }
                 }
-                ThumbnailGrid(
-                    visibleEntries,
-                    selected,
-                    onSelect = { selected = it },
-                    onAutostretch = { autostretchTarget = it },
-                )
-            }
-            VerticalDivider()
-            Column(Modifier.width(AppDimens.metadataPanelWidth).fillMaxHeight()) {
-                MetadataPanel(selected)
             }
         }
     }
-    }
     autostretchTarget?.let { target ->
         AutostretchDialog(target) { autostretchTarget = null }
+    }
+}
+
+/**
+ * A [VerticalDivider] with a wider, draggable hit area and an E–W resize cursor.
+ * Reports the horizontal drag [delta] in dp so the caller can resize a panel.
+ */
+@Composable
+private fun DraggableVerticalDivider(onDrag: (Dp) -> Unit) {
+    val density = LocalDensity.current
+    Box(
+        Modifier
+            .fillMaxHeight()
+            .width(AppDimens.spaceSm)
+            .pointerHoverIcon(PointerIcon(Cursor(Cursor.E_RESIZE_CURSOR)))
+            .draggable(
+                orientation = Orientation.Horizontal,
+                state = rememberDraggableState { delta -> onDrag(with(density) { delta.toDp() }) },
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        VerticalDivider()
     }
 }
 

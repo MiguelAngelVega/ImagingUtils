@@ -1,4 +1,4 @@
-package com.imagingutils
+package com.imagingutils.designsystem
 
 import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.defaultScrollbarStyle

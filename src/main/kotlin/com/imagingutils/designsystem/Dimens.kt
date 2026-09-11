@@ -1,4 +1,4 @@
-package com.imagingutils
+package com.imagingutils.designsystem
 
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -25,5 +25,8 @@ object AppDimens {
 
     // Panels and grid.
     val metadataPanelWidth: Dp = 340.dp
+    val thumbnailsPanelDefaultWidth: Dp = 480.dp
+    val thumbnailsPanelMinWidth: Dp = 220.dp
+    val previewPaneMinWidth: Dp = 280.dp
     val thumbnailMinSize: Dp = 160.dp
 }
